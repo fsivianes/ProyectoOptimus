@@ -1,0 +1,7 @@
+Prime Documentation/
+*.aux
+*.bcf
+*.out
+*.pdf
+*.xml
+*.gz
