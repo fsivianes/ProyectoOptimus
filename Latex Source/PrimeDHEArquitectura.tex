@@ -1,13 +1,13 @@
 \chapter{PRIME Data Headend Server}
-PRIME Data Headend Server, en adelante "PRIME DHE", es un producto software capaz de sustituir un concentrador de datos tradicional en una red PRIME. "PRIME DHE" ejecuta uno o varios concentradores virtuales en un equipo servidor completamente deslocalizado de la red que administra. En conjunción con el router "Regesta PLC 3G" (de la compañía "Teldat") como nodo base de la red, el tandem creado está habilitado para operar completamente una red PRIME. Así, se hace innecesario la instalación física de concentradores de datos, ahorrando una parte importante en costes de mantenimiento e instalación.
+PRIME Data Headend Server, en adelante <<PRIME DHE>>, es un producto software capaz de sustituir un concentrador de datos tradicional en una red PRIME. <<PRIME DHE>> implementa uno o varios concentradores virtuales en un equipo servidor completamente deslocalizado de la red que administra. En conjunción con el router <<Regesta PLC 3G>> (de la compañía <<Teldat>>) como nodo base de la red, el tandem creado está habilitado para operar completamente una red PRIME. Así, se hace innecesario la instalación física de concentradores de datos, ahorrando una parte importante en costes de mantenimiento e instalación.
 
-Para entender como trabaja "PRIME DHE"  primero hay que conocer la estructura de una red "PRIME". La figura \ref{fig:EstructuraPRIME} representa una topología típica de una red PRIME. Los elementos de actúan en ella son los siguientes:
+Para entender como trabaja <<PRIME DHE>>  primero hay que conocer la estructura de una red "PRIME". La figura \ref{fig:EstructuraPRIME} representa una topología típica de una red PRIME. Los elementos de actúan en ella son los siguientes:
 \begin{description}
 	\item[STG] El Sistema de Telegestión es el punto de entrada del usuario operador de la red. Este se encarga de pedir periódicamente a los concentradores los informes con las medidas de consumo, y solicitar la ejecución de órdenes. Todo ello a través de servicios web.
 	\item[Router] El router es el enlace de comunicaciones entre el concentrador y el STG.
 	\item[Concentrador] El concentrador por su parte está constantemente preguntando a los contadores sus medidas y ejecuta las órdenes e informes que le solicite el STG. Para ello, típicamente, disponen de dos interfaces de red: una para recibir y enviar al STG (a través del router); y otra para la comunicación PLC con los contadores (a través del nodo base).
 	\item[Nodo Base] El nodo base es el enlace de comunicaciones entre los contadores y el concentrador a través de la línea eléctrica.
-	\item[Contadores] Los contadores son el fin último de las "Smart Grids", llevan la cuenta de la energía consumida y vertida en la red eléctrica, controlan la potencia máxima de salida hacia el consumidor, etc...
+	\item[Contadores] Los contadores son el fin último de las <<Smart Grids>>, llevan la cuenta de la energía consumida y vertida en la red eléctrica, controlan la potencia máxima de salida hacia el consumidor, etc...
 \end{description}
 
 \begin{figure}[htbp]
