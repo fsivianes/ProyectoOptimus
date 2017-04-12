@@ -50,8 +50,76 @@ En este marco de funcionamiento la capacidad de proceso se reparte entre las dis
  	\item Mayor flexibilidad
  \end{itemize}
 
+\subsection{Visión global}
+Como hemos visto anteriormente, <<PRIME DHE>> esta estructurado en múltiples capas. En concreto son tres capas: la capa de usuario, la capa de gestión y procesamiento, y por último la capa de comunicaciones <<PRIME>>. En la figura \ref{fig:ArquitecturaDHEVisionGlobal} se puede ver una visión global del sistema.
 
-Probando
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\textwidth]{Img/dummy.png}
+	\caption{Arquitectura globlal <<PRIME DHE>>}
+	\label{fig:ArquitecturaDHEVisionGlobal}
+\end{figure}
+
+\begin{description}
+	\item[Capa usuario - <<VDC\_PRIME>>, aplicación web] La capa de usuario es el punto de entrada al sistema, tanto para usuarios humanos como para los <<STG>>, desde aquí se gestiona toda la interacción de los usuarios. La componen dos servicios: una aplicación web, que emula la interfaz de un concentrador tradicional, y <<VDC\_PRIME>> hace de interfaz para los STG. 
+	\item[Capa de gestión y procesamiento - <<Thunder>>] Esta capa es el núcleo del sistema. Todas las peticiones se gestionan y procesan aquí. De ello se encarga <<Thunder>>, un gestor de tareas eficiente y versátil.
+	\item[Capa de comunicaciones <<PRIME>> - <<Agamenón>>] En esta capa está contenida toda la lógica necesaria para las comunicaciones con los contadores. Esta capa está gobernada por <<Agamenón>>, un servicio que se encarga de traducir las peticiones en alto nivel a <<DLMS/COSEM>> que es el protocolo final en el que se intercambian los mensajes.
+\end{description}
+
+Cada capa tiene su propia base de datos, con lo que, la independencia y deslocalización de cada una de ellas está asegurada. De esta forma, podríamos tener un una máquina ejecutando los cuatro servicios y en otra las bases de datos. Otra opción podría se mantener las bases de datos en la nube y los servicios en un servidor más cerca de los dispositivos, o también una máquina para cada servicio. En cualquier caso, la flexibilidad del sistema en cuanto a requerimientos de despliegue y/o necesidades está asegurada.
+
+
+\section{Agamenón}
+Este servicio implementa la capa más baja del sistema. Su cometido, como vimos anteriormente, es encapsular la lógica de las comunicaciones <<PRIME>>. Así, ofrece el nivel de abstracción necesario para poder olvidarnos de los detalles específicos de esta tecnología como los reintentos, los códigos <<OBIS>>, etc...
+\subsection{Comunicaciones}
+<<Agamenón>> usa su base de datos como interfaz hacia el nivel superior. Cada registro nuevo en su base de datos lo trata como una petición independiente. Una vez insertada la petición, solo queda esperar a que acabe de procesarla y los datos requeridos ya estarán listos para su uso. La razón de este método de comunicación no es otra que la sencillez y la velocidad. 
+
+En la operativa habitual (tanto para generar un informe como leer medidas de consumo) son necesarias bastantes peticiones distintas. La casuística de estas es muy amplia ya que pueden ser muchas distintas: para un solo contador, o la misma para muchos contadores, llegan a distintas velocidades, pueden no llegar siquiera, etc... Por todo ello, hay que hacer un seguimiento activo de cada una de las peticiones. Este seguimiento se podría volver muy engorroso si se dependiera de algún tipo de <<API>> o similar, en cambio, al ser las peticiones una tupla de una tabla en una base de datos, todos los actores implicados pueden interactuar con ella sin que se perjudique ni el rendimiento o la complejidad, y además evita colisiones.
+
+\begin{table}[hb]
+	\centering
+	\begin{tabular}{lll}
+		\toprule
+		Campo & Tipo de Dato & Uso\\ \toprule
+		Id & Entero & Clave primaria \\ \cline{3-3}
+		BaseNodeMAC & Cadena & \multirow{5}{*}{Datos <<PRIME>>} \\ 
+		BaseNodeIP & Cadena & \\
+		BaseNodePort & Cadena & \\
+		ServiceNodeMAC & Cadena & \\
+		ServiceNodePassword & Cadena & \\
+		Data & Cadena & \\ \cline{3-3}
+		Finish & Booleano & \multirow{9}{*}{Gestión de peticiones}\\
+		FinishDateTime & Fecha y hora & \\
+		FinishState & Entero & \\
+		Retry & Entero & \\
+		RetryInterval & Entero & \\
+		NextRetryDate & Fecha y hora & \\
+		Priority & Entero & \\
+		TimeOutDateTime & Fecha y hora & \\
+		Type & Entero & \\ \cline{3-3}
+		Tracker & Entero & Seguimiento\\
+		\bottomrule
+	\end{tabular}
+	\caption{Tabla para peticiones de Agamenón}
+	\label{tab:DiagramaTablaAgamenon}
+\end{table}
+
+En la tabla \ref{tab:DiagramaTablaAgamenon} podemos ver resumidamente los campos que componen la tabla para las peticiones hacia <<Agamenón>> y su uso. Los nombres de los campos son bastante explícitos, no obstante, a continuación detallaremos los más relevantes.
+
+\begin{description}
+	\item[Datos <<PRIME>>] Lorem ipsum
+	\item[Gestión de peticiones] Lorem ipsum
+	\item[Seguimiento] Lorem ipsum
+\end{description}
+
+
+
+
+
+
+
+
+
 
 
 
