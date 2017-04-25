@@ -68,8 +68,8 @@ Como hemos visto anteriormente, <<PRIME DHE>> esta estructurado en múltiples ca
 
 Cada capa tiene su propia base de datos, con lo que, la independencia y deslocalización de cada una de ellas está asegurada. De esta forma, podríamos tener un una máquina ejecutando los cuatro servicios y en otra las bases de datos. Otra opción podría se mantener las bases de datos en la nube y los servicios en un servidor más cerca de los dispositivos, o también una máquina para cada servicio. En cualquier caso, la flexibilidad del sistema en cuanto a requerimientos de despliegue y/o necesidades está asegurada.
 
-
 \section{Agamenón}
+
 Este servicio implementa la capa más baja del sistema. Su cometido, como vimos anteriormente, es encapsular la lógica de las comunicaciones <<PRIME>>. Así, ofrece el nivel de abstracción necesario para poder olvidarnos de los detalles específicos de esta tecnología como los reintentos, los códigos <<OBIS>>, etc...
 \subsection{Comunicaciones}
 <<Agamenón>> usa su base de datos como interfaz hacia el nivel superior. Cada registro nuevo en su base de datos lo trata como una petición independiente. Una vez insertada la petición, solo queda esperar a que acabe de procesarla y los datos requeridos ya estarán listos para su uso. La razón de este método de comunicación no es otra que la sencillez y la velocidad. 
@@ -113,7 +113,7 @@ En la tabla \ref{tab:DiagramaTablaAgamenon} podemos ver resumidamente los campos
 \end{description}
 
 
-\subsection{Estructura}
+\subsection{Estructura y funcionamiento}
 <<Agamenón>> está concebido para ser modular y estar desacoplado en cada una de sus partes. Lo cual, nos permite ampliarlo o modificarlo con un coste muy bajo. Principalmente, consta de cuatro piezas fundamentales que interactúan entre si: Engine, BaseNode, ServiceNode y ObisLibrary. En la figura \ref{fig:EstructuraAgameon} se puede ver un diagrama de la estructura general.
 \begin{figure}[htbp]
 	\centering
@@ -233,9 +233,27 @@ Este subsistema actúa como una oficina de correos, cuando llega un mensaje nuev
 
 Pasado el arranque inicial, el <<BaseNode>> tomará una petición de su propia cola y comprobará si el contador al que pertenece está activo. En caso afirmativo, levantará el proceso <<ServiceNode>> (si no lo estaba ya), y le entregará la petición. A partir de aquí, la responsabilidad de la petición pasa al <<ServiceNode>>. En caso de que el contador no esté activo, actualizará los campos pertinentes de la petición marcando así que ha sido procesada. Esto es así, porque aunque el contador no esté activo, la petición ha sido intentada y hay que marcarla como tal.
 
-\subsubsection{ServiceNode}
+\subsubsection{ServiceNode y ObisLibrary}
 
-LLegamos a la última etapa del procesamiento de una petición. Aquí, en el <<ServiceNode>> es donde realmente se <<habla>> con el contador. 
+LLegamos a la última etapa del procesamiento de una petición. Aquí, en el <<ServiceNode>> es donde realmente se <<habla>> con el contador. El cometido de esta parte del servicio es establecer las comunicaciones con el contador y obtener los datos.
+
+En esta etapa entran en juego dos subsistemas: <<ServiceNode>>, se encarga del proceso de comunicación con el contador; y <<ObisLibrary>>, esta encapsula toda la lógica de los códigos OBIS, ofreciendo una interfaz más amable. En la petición, en campo \textsl{Data} es un serializado de un objeto de <<ObisLibrary>>.
+
+La <<ObisLibrary>>, básicamente, es una colección de objetos en la que cada uno de ellos representa un código OBIS o una familia de ellos. Dentro de cada uno está programado su código, su clase, los atributos disponibles, variables para guardar los resultados. También dispone de métodos para obtener las tramas \textsl{DLMS} necesarias para su obtención, y parsear las respuestas a datos útiles. Además, todos los estos objetos heredan de un mismo objeto padre con lo que ni siquiera es necesario conocer que objeto es, simplemente se deserializa y se invocan los métodos correspondientes.
+
+Del subsistema <<ServiceNode>> se tienen tantas instancias como el número de contadores distintos a los que se les esté preguntando algo, y igual que el <<BaseNode>>, el <<ServiceNode>> también se ejecuta en dos fases: inicialización y comunicación.
+
+En la fase de inicialización se establece la asociación con el contador, en la petición está contenida la contraseña. Para ello, haciendo uso de los mecanismos que proporciona el <<BaseNode>> envía al contador el objeto \textsl{AARQ}, que contiene los detalles de la asociación. A este objeto le responde el contador con el \textsl{AARE}, que contiene los detalles que acepta o no el contador. 
+
+Una vez obtenida la asociación ya podemos empezar a pedirle objetos. Empieza la segunda fase. Se toma una petición de la cola, se instancia el objeto <<ObisLibrary>> que contiene y se invoca un método u otro según sea el tipo de petición(el campo \textsl{Type} marca que cual es). Una vez obtenida la trama \textsl{DLMS} se le añade la cabecera \textsl{Ticket-67} y se le envía al contador a través del <<BaseNode>>. 
+
+Entonces, el <<ServiceNode>> espera a la respuesta del contador, la cual se la pasa al objeto <<ObisLibrary>>. Este último obtendrá y guardará los datos contenidos en las tramas. Una vez hecho esto, se vuelve a serializar y se persiste en base de datos. Se marca la petición como finalizada y vuelve a empezar el proceso con una petición nueva. 
+
+En caso de que no haya más peticiones, enviará el comado <<Ticket-67>> de desconexión. Esto es una buena práctica con la que se evitan errores derivados de sesiones que se queden abiertas, evita datos sucios en los buffers, etc; ya que en el proceso de desconexión y reconexión se resetean las comunicaciones. También se hace esto cuando se detecta cualquier tipo de error.
+
+
+
+
 
 
 
